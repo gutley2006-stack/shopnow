@@ -61,6 +61,227 @@
         </div>
     </div>
 
+    <!-- Checkout Wizard -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content checkout-modal">
+            <span class="close" id="closeCheckout">&times;</span>
+            
+            <!-- Progress Bar -->
+            <div class="checkout-progress">
+                <div class="progress-step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Contact</div>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Shipping</div>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Payment</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Contact Information -->
+            <div id="step1" class="checkout-step active">
+                <h2>Contact Information</h2>
+                <form id="contactForm" class="checkout-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name *</label>
+                            <input type="text" id="firstName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name *</label>
+                            <input type="text" id="lastName" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" class="form-control" placeholder="+1 (555) 000-0000" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeCheckout()">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(1)">Next: Shipping</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 2: Shipping Address -->
+            <div id="step2" class="checkout-step">
+                <h2>Shipping Address</h2>
+                <form id="shippingForm" class="checkout-form">
+                    <div class="form-group">
+                        <label for="address">Street Address *</label>
+                        <input type="text" id="address" class="form-control" placeholder="123 Main St" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address2">Apartment, Suite, etc. (Optional)</label>
+                        <input type="text" id="address2" class="form-control" placeholder="Apt 4B">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">City *</label>
+                            <input type="text" id="city" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="state">State/Province *</label>
+                            <input type="text" id="state" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="zip">ZIP/Postal Code *</label>
+                            <input type="text" id="zip" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="country">Country *</label>
+                            <input type="text" id="country" class="form-control" value="United States" required>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Method -->
+                    <div class="shipping-methods">
+                        <h3>Shipping Method</h3>
+                        <div class="shipping-option">
+                            <input type="radio" id="standard" name="shipping" value="standard" checked>
+                            <label for="standard">
+                                <div class="option-header">Standard Shipping</div>
+                                <div class="option-detail">Delivery in 5-7 business days - FREE</div>
+                            </label>
+                        </div>
+                        <div class="shipping-option">
+                            <input type="radio" id="express" name="shipping" value="express">
+                            <label for="express">
+                                <div class="option-header">Express Shipping</div>
+                                <div class="option-detail">Delivery in 2-3 business days - $9.99</div>
+                            </label>
+                        </div>
+                        <div class="shipping-option">
+                            <input type="radio" id="overnight" name="shipping" value="overnight">
+                            <label for="overnight">
+                                <div class="option-header">Overnight Shipping</div>
+                                <div class="option-detail">Delivery next business day - $19.99</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next: Payment</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 3: Payment Information -->
+            <div id="step3" class="checkout-step">
+                <h2>Payment Information</h2>
+                <div class="order-summary-box">
+                    <h3>Order Summary</h3>
+                    <div id="orderSummary" class="summary-items"></div>
+                    <div class="summary-total">
+                        <div class="total-row subtotal">
+                            <span>Subtotal:</span>
+                            <span>$<span id="subtotalAmount">0.00</span></span>
+                        </div>
+                        <div class="total-row shipping-cost">
+                            <span>Shipping:</span>
+                            <span>$<span id="shippingAmount">0.00</span></span>
+                        </div>
+                        <div class="total-row tax">
+                            <span>Tax (10%):</span>
+                            <span>$<span id="taxAmount">0.00</span></span>
+                        </div>
+                        <div class="total-row final">
+                            <span>Total:</span>
+                            <span>$<span id="finalTotal">0.00</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="paymentForm" class="checkout-form">
+                    <!-- Payment Method Selection -->
+                    <div class="payment-methods">
+                        <h3>Payment Method</h3>
+                        <div class="payment-option">
+                            <input type="radio" id="creditCard" name="payment" value="credit" checked>
+                            <label for="creditCard">💳 Credit/Debit Card</label>
+                        </div>
+                        <div class="payment-option">
+                            <input type="radio" id="paypal" name="payment" value="paypal">
+                            <label for="paypal">🅿️ PayPal</label>
+                        </div>
+                        <div class="payment-option">
+                            <input type="radio" id="applepay" name="payment" value="applepay">
+                            <label for="applepay">🍎 Apple Pay</label>
+                        </div>
+                    </div>
+
+                    <!-- Credit Card Form -->
+                    <div id="cardPayment" class="payment-details">
+                        <div class="form-group">
+                            <label for="cardName">Full Name on Card *</label>
+                            <input type="text" id="cardName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cardNumber">Card Number *</label>
+                            <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="expiry">Expiry Date *</label>
+                                <input type="text" id="expiry" class="form-control" placeholder="MM/YY" maxlength="5" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">CVV *</label>
+                                <input type="text" id="cvv" class="form-control" placeholder="123" maxlength="4" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PayPal Form -->
+                    <div id="paypalPayment" class="payment-details" style="display:none;">
+                        <p class="payment-info">You will be redirected to PayPal to complete your purchase securely.</p>
+                    </div>
+
+                    <!-- Apple Pay Form -->
+                    <div id="applepayPayment" class="payment-details" style="display:none;">
+                        <p class="payment-info">Apple Pay is ready to use with your saved payment methods.</p>
+                    </div>
+
+                    <!-- Terms & Conditions -->
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms">I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a></label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
+                        <button type="button" class="btn btn-success" onclick="completePayment()">Complete Purchase</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content success-modal">
+            <div class="success-icon">✓</div>
+            <h2>Order Confirmed!</h2>
+            <p>Thank you for your purchase</p>
+            <div id="orderNumber" class="order-number"></div>
+            <p class="confirmation-text">A confirmation email has been sent to your email address.</p>
+            <button class="btn btn-primary" onclick="closeSuccess()">Continue Shopping</button>
+        </div>
+    </div>
+
     <!-- About Section -->
     <section id="about" class="about">
         <div class="container">
@@ -73,7 +294,7 @@
     <section id="contact" class="contact">
         <div class="container">
             <h2>Contact Us</h2>
-            <form id="contactForm">
+            <form id="contactPageForm">
                 <input type="text" placeholder="Your Name" required>
                 <input type="email" placeholder="Your Email" required>
                 <textarea placeholder="Your Message" rows="5" required></textarea>

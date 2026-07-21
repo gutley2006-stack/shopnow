@@ -102,6 +102,13 @@ const products = [
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let currentFilter = 'all';
 
+// Checkout Data
+let checkoutData = {
+    contact: {},
+    shipping: {},
+    payment: {}
+};
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     renderProducts(products);
@@ -128,17 +135,56 @@ function setupEventListeners() {
     document.getElementById('closeCart').addEventListener('click', closeCart);
 
     // Checkout button
-    document.getElementById('checkoutBtn').addEventListener('click', checkout);
+    document.getElementById('checkoutBtn').addEventListener('click', openCheckout);
+
+    // Close checkout
+    document.getElementById('closeCheckout').addEventListener('click', closeCheckout);
 
     // Contact form
-    document.getElementById('contactForm').addEventListener('submit', handleContactSubmit);
+    document.getElementById('contactPageForm').addEventListener('submit', handleContactSubmit);
+
+    // Payment method change
+    document.querySelectorAll('input[name="payment"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            document.querySelectorAll('.payment-details').forEach(el => el.style.display = 'none');
+            const selected = e.target.value;
+            if (selected === 'credit') {
+                document.getElementById('cardPayment').style.display = 'block';
+            } else if (selected === 'paypal') {
+                document.getElementById('paypalPayment').style.display = 'block';
+            } else if (selected === 'applepay') {
+                document.getElementById('applepayPayment').style.display = 'block';
+            }
+        });
+    });
+
+    // Shipping method change
+    document.querySelectorAll('input[name="shipping"]').forEach(radio => {
+        radio.addEventListener('change', updateOrderTotal);
+    });
+
+    // Card number formatting
+    document.getElementById('cardNumber').addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\s/g, '');
+        let formattedValue = value.replace(/(\d{4})/g, '$1 ').trim();
+        e.target.value = formattedValue;
+    });
+
+    // Expiry date formatting
+    document.getElementById('expiry').addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        e.target.value = value;
+    });
 
     // Close modal on outside click
     window.addEventListener('click', (e) => {
-        const modal = document.getElementById('cartModal');
-        if (e.target === modal) {
-            closeCart();
-        }
+        const checkoutModal = document.getElementById('checkoutModal');
+        const successModal = document.getElementById('successModal');
+        if (e.target === checkoutModal) closeCheckout();
+        if (e.target === successModal) closeSuccess();
     });
 }
 
@@ -261,49 +307,219 @@ function renderCart() {
     cartTotal.textContent = total.toFixed(2);
 }
 
-// Open Cart Modal
+// Open/Close Cart
 function openCart() {
-    renderCart();
-    document.getElementById('cartModal').style.display = 'block';
-}
-
-// Close Cart Modal
-function closeCart() {
-    document.getElementById('cartModal').style.display = 'none';
-}
-
-// Checkout
-function checkout() {
     if (cart.length === 0) {
-        alert('Your cart is empty!');
+        showNotification('Your cart is empty! Add items to continue.', 'warning');
+        return;
+    }
+    renderCart();
+    document.getElementById('cartModal').classList.add('show');
+}
+
+function closeCart() {
+    document.getElementById('cartModal').classList.remove('show');
+}
+
+// Checkout Functions
+function openCheckout() {
+    if (cart.length === 0) {
+        showNotification('Your cart is empty! Add items to continue.', 'warning');
+        return;
+    }
+    closeCart();
+    document.getElementById('checkoutModal').classList.add('show');
+    updateOrderTotal();
+}
+
+function closeCheckout() {
+    document.getElementById('checkoutModal').classList.remove('show');
+}
+
+// Navigation between steps
+function nextStep(currentStep) {
+    if (currentStep === 1) {
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+
+        if (!firstName || !lastName || !email || !phone) {
+            showNotification('Please fill in all contact information', 'warning');
+            return;
+        }
+
+        checkoutData.contact = { firstName, lastName, email, phone };
+        goToStep(2);
+    } else if (currentStep === 2) {
+        const address = document.getElementById('address').value.trim();
+        const city = document.getElementById('city').value.trim();
+        const state = document.getElementById('state').value.trim();
+        const zip = document.getElementById('zip').value.trim();
+        const country = document.getElementById('country').value.trim();
+        const shipping = document.querySelector('input[name="shipping"]:checked').value;
+
+        if (!address || !city || !state || !zip || !country) {
+            showNotification('Please fill in all shipping address fields', 'warning');
+            return;
+        }
+
+        checkoutData.shipping = {
+            address,
+            address2: document.getElementById('address2').value.trim(),
+            city,
+            state,
+            zip,
+            country,
+            shippingMethod: shipping
+        };
+
+        renderOrderSummary();
+        goToStep(3);
+    }
+}
+
+function prevStep(currentStep) {
+    goToStep(currentStep - 1);
+}
+
+function goToStep(step) {
+    // Hide all steps
+    document.querySelectorAll('.checkout-step').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.progress-step').forEach(s => s.classList.remove('active'));
+
+    // Show current step
+    document.getElementById('step' + step).classList.add('active');
+    document.querySelector(`.progress-step[data-step="${step}"]`).classList.add('active');
+
+    // Update completed steps
+    for (let i = 1; i < step; i++) {
+        document.querySelector(`.progress-step[data-step="${i}"]`).classList.add('completed');
+    }
+}
+
+function renderOrderSummary() {
+    const summaryDiv = document.getElementById('orderSummary');
+    let html = '';
+
+    cart.forEach(item => {
+        const itemTotal = (item.price * item.quantity).toFixed(2);
+        html += `
+            <div class="summary-item">
+                <span>${item.name} <span class="summary-item-qty">x${item.quantity}</span></span>
+                <span>$${itemTotal}</span>
+            </div>
+        `;
+    });
+
+    summaryDiv.innerHTML = html;
+    updateOrderTotal();
+}
+
+function updateOrderTotal() {
+    let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Get shipping cost
+    const shippingMethod = document.querySelector('input[name="shipping"]:checked').value;
+    let shippingCost = 0;
+    if (shippingMethod === 'express') shippingCost = 9.99;
+    else if (shippingMethod === 'overnight') shippingCost = 19.99;
+
+    const tax = (subtotal * 0.1);
+    const total = subtotal + shippingCost + tax;
+
+    document.getElementById('subtotalAmount').textContent = subtotal.toFixed(2);
+    document.getElementById('shippingAmount').textContent = shippingCost.toFixed(2);
+    document.getElementById('taxAmount').textContent = tax.toFixed(2);
+    document.getElementById('finalTotal').textContent = total.toFixed(2);
+}
+
+function completePayment() {
+    const cardName = document.getElementById('cardName').value.trim();
+    const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+    const expiry = document.getElementById('expiry').value;
+    const cvv = document.getElementById('cvv').value;
+    const terms = document.getElementById('terms').checked;
+
+    if (!terms) {
+        showNotification('Please accept the terms and conditions', 'warning');
         return;
     }
 
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    alert(`Thank you for your purchase!\n\nTotal: $${total.toFixed(2)}\n\nYour order has been confirmed.`);
-    
-    cart = [];
-    saveCart();
-    updateCartCount();
-    closeCart();
+    const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+
+    if (paymentMethod === 'credit') {
+        if (!cardName || cardNumber.length !== 16 || !expiry || cvv.length < 3) {
+            showNotification('Please enter valid card information', 'warning');
+            return;
+        }
+    }
+
+    // Process payment
+    processPayment();
 }
 
-// Handle Contact Form Submission
+function processPayment() {
+    // Simulate payment processing
+    showNotification('Processing payment...', 'success');
+
+    setTimeout(() => {
+        // Generate order number
+        const orderNumber = 'ORD-' + Date.now();
+
+        // Show success modal
+        document.getElementById('checkoutModal').classList.remove('show');
+        document.getElementById('successModal').classList.add('show');
+        document.getElementById('orderNumber').textContent = `Order Number: ${orderNumber}`;
+
+        // Save order to localStorage
+        const order = {
+            orderNumber,
+            contact: checkoutData.contact,
+            shipping: checkoutData.shipping,
+            items: cart,
+            total: document.getElementById('finalTotal').textContent,
+            date: new Date().toISOString()
+        };
+
+        const orders = JSON.parse(localStorage.getItem('orders')) || [];
+        orders.push(order);
+        localStorage.setItem('orders', JSON.stringify(orders));
+
+        // Clear cart
+        cart = [];
+        saveCart();
+        updateCartCount();
+        checkoutData = { contact: {}, shipping: {}, payment: {} };
+    }, 2000);
+}
+
+function closeSuccess() {
+    document.getElementById('successModal').classList.remove('show');
+    goToStep(1);
+    // Reset checkout form
+    document.getElementById('contactForm').reset();
+    document.getElementById('shippingForm').reset();
+    document.getElementById('paymentForm').reset();
+}
+
+// Contact Form Handler
 function handleContactSubmit(e) {
     e.preventDefault();
-    alert('Thank you for your message! We\'ll get back to you soon.');
-    document.getElementById('contactForm').reset();
+    showNotification('Thank you for your message! We\'ll get back to you soon.', 'success');
+    document.getElementById('contactPageForm').reset();
 }
 
-// Show Notification
-function showNotification(message) {
-    // Create notification element
+// Notification
+function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
     notification.style.cssText = `
         position: fixed;
         top: 80px;
         right: 20px;
-        background-color: #22c55e;
+        background-color: ${type === 'warning' ? '#f59e0b' : type === 'error' ? '#ef4444' : '#10b981'};
         color: white;
         padding: 1rem 1.5rem;
         border-radius: 5px;
@@ -311,18 +527,15 @@ function showNotification(message) {
         z-index: 1001;
         animation: slideIn 0.3s ease-out;
     `;
-    notification.textContent = message;
-
     document.body.appendChild(notification);
 
-    // Remove after 3 seconds
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-out';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 
-// Add animations
+// Animation styles
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn {
