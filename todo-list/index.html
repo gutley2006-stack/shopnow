@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster - To-Do List Application</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">✓ TaskMaster</div>
+            <ul class="nav-links">
+                <li><a href="#tasks">My Tasks</a></li>
+                <li><a href="#stats">Stats</a></li>
+                <li><a href="#settings">Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>TaskMaster</h1>
+            <p>Stay organized and productive with your personal to-do list</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container main-content">
+        <!-- Input Section -->
+        <section id="input-section" class="input-section">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    id="taskInput" 
+                    class="task-input" 
+                    placeholder="Add a new task..."
+                    autocomplete="off"
+                >
+                <select id="prioritySelect" class="priority-select">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+                <button id="addBtn" class="btn btn-add">Add Task</button>
+            </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="filter-section">
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="completed">Completed</button>
+                <button class="filter-btn" data-filter="high">High Priority</button>
+            </div>
+            <div class="sort-options">
+                <button class="sort-btn" id="sortByDate">Sort by Date</button>
+                <button class="sort-btn" id="sortByPriority">Sort by Priority</button>
+                <button class="action-btn" id="clearCompleted">Clear Completed</button>
+            </div>
+        </section>
+
+        <!-- Tasks Grid -->
+        <section id="tasks" class="tasks-section">
+            <div id="tasksList" class="tasks-grid">
+                <!-- Tasks will be rendered here -->
+            </div>
+            <div id="emptyState" class="empty-state">
+                <div class="empty-icon">📝</div>
+                <p>No tasks yet. Create one to get started!</p>
+            </div>
+        </section>
+
+        <!-- Statistics Section -->
+        <section id="stats" class="stats-section">
+            <h2>Your Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Total Tasks</div>
+                        <div class="stat-number" id="totalTasks">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-number" id="completedTasks">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Active</div>
+                        <div class="stat-number" id="activeTasks">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Completion Rate</div>
+                        <div class="stat-number" id="completionRate">0%</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="settings-section">
+            <h2>Settings</h2>
+            <div class="settings-container">
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="darkModeToggle" class="checkbox">
+                        <span>Dark Mode</span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="notificationsToggle" class="checkbox" checked>
+                        <span>Enable Notifications</span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="soundToggle" class="checkbox" checked>
+                        <span>Sound Effects</span>
+                    </label>
+                </div>
+                <div class="setting-actions">
+                    <button id="exportBtn" class="btn btn-secondary">Export Tasks</button>
+                    <button id="importBtn" class="btn btn-secondary">Import Tasks</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                    <button id="resetBtn" class="btn btn-danger">Reset All</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Edit Task Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>Edit Task</h2>
+            <form id="editForm">
+                <input type="hidden" id="editTaskId">
+                <div class="form-group">
+                    <label for="editTaskInput">Task Description</label>
+                    <textarea id="editTaskInput" class="form-control" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editPrioritySelect">Priority</label>
+                    <select id="editPrioritySelect" class="form-control">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editDueDate">Due Date</label>
+                    <input type="date" id="editDueDate" class="form-control">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 TaskMaster. All your tasks, organized and saved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
